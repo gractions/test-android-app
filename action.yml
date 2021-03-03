@@ -1,0 +1,29 @@
+name: Test android application
+description: Runs check, connectedAndroidTest and assemble gradle tasks using gradlew
+inputs:
+  path:
+    description: Path to project
+    required: false
+    default: $GITHUB_WORKSPACE
+  emulator_address:
+    description: Used for adb connect
+    required: false
+    default: "localhost:5555"
+runs:
+  using: "composite"
+  steps:
+    - name: Check
+      shell: bash
+      working-directory: ${{ inputs.path }}
+      run: ./gradlew check --console=plain
+    - name: Connected Android Test
+      shell: bash
+      working-directory: ${{ inputs.path }}
+      run: |
+        $ANDROID_SDK_ROOT/platform-tools/adb connect android-emulator:5555
+        $ANDROID_SDK_ROOT/platform-tools/adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
+        ./gradlew connectedAndroidTest
+    - name: Build app
+      shell: bash
+      working-directory: ${{ inputs.path }}
+      run: ./gradlew assemble --console=plain
